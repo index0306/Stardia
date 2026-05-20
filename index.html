@@ -1,1 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSOCIETY // TRACKER SYSTEMS</title>
+<style>
+/* Обнуление стилей и темная хакерская база */
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Courier New', Courier, monospace;
+}
 
+body {
+background-color: #050505;
+color: #00ff41; /* Классический зеленый цвет терминала */
+overflow-x: hidden;
+position: relative;
+}
+
+/* Эффект шума/сетки на фоне в стиле старых мониторов */
+body::before {
+content: " ";
+display: block;
+position: fixed;
+top: 0; left: 0; bottom: 0; right: 0;
+background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+z-index: 99999;
+background-size: 100% 3px, 6px 100%;
+pointer-events: none;
+}
+
+/* Плавное появление элементов при загрузке */
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glitch {
+0% { text-shadow: 2px 2px #ff0055, -2px -2px #00ff41; }
+50% { text-shadow: -2px 2px #ff0055, 2px -2px #00ff41; }
+100% { text-shadow: 2px -2px #ff0055, -2px 2px #00ff41; }
+}
+
+.container {
+max-width: 1000px;
+margin: 0 auto;
+padding: 20px;
+animation: fadeIn 1.2s ease-out;
+}
+
+/* Верхнее предупреждение */
+.warning-banner {
+text-align: center;
+background-color: rgba(255, 0, 0, 0.15);
+border: 1px dashed #ff0055;
+color: #ff0055;
+padding: 15px;
+font-size: 1.3rem;
+font-weight: bold;
+margin-bottom: 40px;
+text-transform: uppercase;
+letter-spacing: 2px;
+animation: glitch 1s infinite alternate;
+}
+
+/* Хедер */
+header {
+text-align: center;
+margin-bottom: 60px;
+border-bottom: 1px solid #00ff41;
+padding-bottom: 20px;
+}
+
+header h1 {
+font-size: 2.5rem;
+letter-spacing: 4px;
+color: #ffffff;
+text-shadow: 0 0 10px #00ff41;
+margin-bottom: 10px;
+}
+
+header p {
+color: #888;
+font-size: 1rem;
+}
+
+/* Секция преимуществ */
+.features {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 25px;
+margin-bottom: 60px;
+}
+
+@media (max-width: 768px) {
+.features { grid-template-columns: 1fr; }
+}
+
+.feature-card {
+background: rgba(0, 20, 5, 0.4);
+border: 1px solid #00ff41;
+padding: 25px;
+position: relative;
+transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+overflow: hidden;
+}
+
+/* Плавная анимация карточек при наведении */
+.feature-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 10px 20px rgba(0, 255, 65, 0.2);
+background: rgba(0, 40, 10, 0.6);
+border-color: #ffffff;
+}
+
+.feature-card h3 {
+font-size: 1.4rem;
+margin-bottom: 15px;
+color: #ffffff;
+display: flex;
+align-items: center;
+}
+
+.feature-card h3::before {
+content: "> ";
+color: #00ff41;
+margin-right: 10px;
+}
+
+.feature-card p {
+color: #a0b0a0;
+line-height: 1.6;
+font-size: 0.95rem;
+}
+
+/* Секция загрузки */
+.download-section {
+text-align: center;
+background: rgba(15, 15, 15, 0.9);
+border: 1px solid #00ff41;
+padding: 50px 20px;
+margin-bottom: 60px;
+position: relative;
+}
+
+.download-section h2 {
+font-size: 1.8rem;
+margin-bottom: 30px;
+color: #ffffff;
+letter-spacing: 2px;
+}
+
+/* Плавная крутая анимация для хакерской кнопки */
+.btn-download {
+display: inline-block;
+background: transparent;
+color: #00ff41;
+border: 2px solid #00ff41;
+padding: 20px 40px;
+font-size: 1.2rem;
+font-weight: bold;
+text-decoration: none;
+text-transform: uppercase;
+letter-spacing: 3px;
+position: relative;
+overflow: hidden;
+transition: all 0.3s ease;
+cursor: pointer;
+box-shadow: 0 0 5px rgba(0, 255, 65, 0.4);
+}
+
+/* Анимация при наведении на кнопку */
+.btn-download:hover {
+color: #050505;
+background: #00ff41;
+box-shadow: 0 0 25px #00ff41, 0 0 50px rgba(0, 255, 65, 0.6);
+transform: scale(1.05);
+}
+
+.btn-download:active {
+transform: scale(0.98);
+}
+
+/* Секция авторов */
+footer {
+text-align: center;
+border-top: 1px dashed #333;
+padding-top: 30px;
+padding-bottom: 20px;
+font-size: 0.9rem;
+color: #555;
+}
+
+footer .credits {
+color: #00ff41;
+margin-top: 10px;
+font-size: 1rem;
+letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="warning-banner">
+[!] ВСЕ ФАЙЛЫ ВНИЗУ! [!]
+</div>
+
+<header>
+<h1>FSOCIETY_TRACKER.SYS</h1>
+<p>Система мониторинга и анализа пакетов данных. Версия 1.0.0</p>
+</header>
+
+<section class="features">
+<div class="feature-card">
+<h3>Абсолютная Анонимность</h3>
+<p>Трекер работает на низком уровне системы. Никаких логов, никакой передачи на центральные серверы корпораций. Полный контроль над вашим окружением.</p>
+</div>
+
+<div class="feature-card">
+<h3>Real-time Мониторинг</h3>
+<p>Отслеживание изменений файловой системы и сетевой активности в режиме реального времени с минимальной задержкой кода.</p>
+</div>
+
+<div class="feature-card">
+<h3>Нулевой след (Zero-Footprint)</h3>
+<p>Оптимизированное ядро утилиты потребляет минимум ресурсов процессора и оперативной памяти.</p>
+</div>
+
+<div class="feature-card">
+<h3>Интуитивный Терминал</h3>
+<p>Весь вывод структурирован специально для быстрого чтения через консольные интерфейсы. Ничего лишнего — только чистые данные.</p>
+</div>
+</section>
+
+<section class="download-section">
+<h2>ЗАГРУЗОЧНЫЙ СЕКТОР</h2>
+<p style="color: #666; margin-bottom: 25px;">Готов к развертыванию целевого исполняемого файла</p>
+
+<a href="fsociety_tracker.sys.exe" download="fsociety_tracker.sys.exe" class="btn-download">
+Скачать fsociety_tracker.sys.exe
+</a>
+</section>
+
+<footer>
+<div>Отказ от ответственности: Используйте ПО исключительно в санкционированных целях безопасности.</div>
+<div class="credits">
+credits: Gemini, okyrok2280
+</div>
+</footer>
+
+</div>
+
+<script>
+// Небольшой интерактивный эффект для хакерской атмосферы в консоли браузера
+console.log("%cFSOCIETY: Инициализация интерфейса трекера выполнена успешно.", "color: #00ff41; font-size: 14px; font-weight: bold;");
+console.log("%cДобро пожаловать в систему.", "color: #ffffff;");
+</script>
+
+</body>
+</html>
