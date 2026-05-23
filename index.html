@@ -406,20 +406,36 @@ const virusModal = document.getElementById('virusModal');
 const openVirusBtn = document.getElementById('openVirusBtn');
 const closeVirusBtn = document.getElementById('closeVirusBtn');
 
+const originalTitle = document.title;
+const originalUrl = window.location.href;
+
 openVirusBtn.addEventListener('click', () => {
 virusModal.classList.add('active');
 mainContainer.classList.add('blur');
+document.title = "FSOCIETY | Список вирусов";
+history.pushState({page: "virus-list"}, "FSOCIETY | Список вирусов", "https://index0306.github.io/Stardia/virus-list");
 });
 
-closeVirusBtn.addEventListener('click', () => {
+function closeModal() {
 virusModal.classList.remove('active');
 mainContainer.classList.remove('blur');
-});
+document.title = originalTitle;
+history.pushState({page: "main"}, originalTitle, originalUrl);
+}
+
+closeVirusBtn.addEventListener('click', closeModal);
 
 virusModal.addEventListener('click', (e) => {
 if (e.target === virusModal) {
+closeModal();
+}
+});
+
+window.addEventListener('popstate', (e) => {
+if (virusModal.classList.contains('active')) {
 virusModal.classList.remove('active');
 mainContainer.classList.remove('blur');
+document.title = originalTitle;
 }
 });
 </script>
