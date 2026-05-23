@@ -56,6 +56,12 @@ to { opacity: 1; transform: translateY(0); }
 100% { transform: scale(1); }
 }
 
+@keyframes statusBlink {
+0% { opacity: 1; }
+50% { opacity: 0.4; filter: brightness(0.7); }
+100% { opacity: 1; }
+}
+
 .container {
 max-width: 1000px;
 margin: 0 auto;
@@ -83,6 +89,7 @@ text-align: center;
 margin-bottom: 60px;
 border-bottom: 1px solid #00ff41;
 padding-bottom: 20px;
+position: relative;
 }
 
 header h1 {
@@ -93,7 +100,26 @@ text-shadow: 0 0 10px #00ff41;
 margin-bottom: 10px;
 }
 
-header p { color: #888; font-size: 1rem; }
+header p { color: #888; font-size: 1rem; margin-bottom: 15px; }
+
+.server-status {
+display: inline-block;
+font-size: 0.85rem;
+font-weight: bold;
+letter-spacing: 2px;
+padding: 4px 12px;
+border: 1px solid #00ff41;
+background: rgba(0, 255, 65, 0.05);
+color: #00ff41;
+transition: all 0.4s ease;
+}
+
+.server-status.offline {
+border-color: #ff0055;
+background: rgba(255, 0, 85, 0.1);
+color: #ff0055;
+animation: statusBlink 1s infinite ease-in-out;
+}
 
 .features {
 display: grid;
@@ -184,10 +210,10 @@ text-align: center;
 .btn-chat { color: #ffff00; border: 2px solid #ffff00; box-shadow: 0 0 5px rgba(255, 255, 0, 0.4); }
 .btn-chat:hover { color: #050505; background: #ffff00; box-shadow: 0 0 25px #ffff00, 0 0 50px rgba(255, 255, 0, 0.6); transform: scale(1.05); }
 
-.btn-admin { color: #ffaa00; border: 2px solid #ffaa00; box-shadow: 0 0 5px rgba(255, 170, 0, 0.4); display: none; }
+.btn-admin { color: #ffaa00; border: 2px solid #ffaa00; display: none; }
 .btn-admin:hover { color: #050505; background: #ffaa00; box-shadow: 0 0 25px #ffaa00, 0 0 50px rgba(255, 170, 0, 0.6); transform: scale(1.05); }
 
-.btn-user-logs { color: #00e5ff; border: 2px solid #00e5ff; box-shadow: 0 0 5px rgba(0, 229, 255, 0.4); display: none; }
+.btn-user-logs { color: #00e5ff; border: 2px solid #00e5ff; display: none; }
 .btn-user-logs:hover { color: #050505; background: #00e5ff; box-shadow: 0 0 25px #00e5ff, 0 0 50px rgba(0, 229, 255, 0.6); transform: scale(1.05); }
 
 .btn-ui:active { transform: scale(0.98); }
@@ -294,6 +320,7 @@ margin-bottom: 5px;
 }
 
 .chat-msg { font-size: 0.9rem; line-height: 1.4; }
+.chat-msg .time-stamp { color: #555; margin-right: 5px; }
 .chat-msg .author { color: #ffff00; }
 .chat-msg .text { color: #fff; }
 
@@ -331,6 +358,22 @@ transition: all 0.3s ease;
 }
 .btn-logout:hover { background: #ff0055; color: #000; }
 
+.filter-row {
+display: flex;
+gap: 10px;
+margin-bottom: 10px;
+}
+
+.filter-input {
+flex: 1;
+background: #000;
+border: 1px dashed #ffaa00;
+padding: 8px 12px;
+color: #fff;
+font-size: 0.85rem;
+outline: none;
+}
+
 .admin-log {
 height: 300px;
 border: 1px solid #ffaa00;
@@ -346,6 +389,7 @@ gap: 12px;
 border-bottom: 1px dashed #222;
 padding-bottom: 8px;
 position: relative;
+line-height: 1.5;
 }
 
 .btn-reply-node {
@@ -361,6 +405,17 @@ display: inline-block;
 transition: all 0.2s;
 }
 .btn-reply-node:hover { background: #00ff41; color: #000; }
+
+.log-loader {
+display: flex;
+align-items: center;
+justify-content: center;
+height: 100%;
+color: #ffaa00;
+font-size: 1.1rem;
+letter-spacing: 2px;
+font-weight: bold;
+}
 
 footer {
 text-align: center;
@@ -385,7 +440,8 @@ footer .credits { color: #00ff41; margin-top: 10px; font-size: 1rem; }
 
 <header>
 <h1>FSOCIETY_TRACKER.SYS</h1>
-<p>Система мониторинга и анализа пакетов данных. Версия 1.0.0</p>
+<p>Система мониторинга и анализа пакетов данных. Версия 1.1.0</p>
+<div class="server-status" id="serverStatus">[ СВЯЗЬ: ПОДКЛЮЧЕНИЕ... ]</div>
 </header>
 
 <section class="features">
@@ -399,7 +455,7 @@ footer .credits { color: #00ff41; margin-top: 10px; font-size: 1rem; }
 </div>
 <div class="feature-card">
 <h3>Нулевой след (Zero-Footprint)</h3>
-<p>Оптимизированное ядро утилиты потребляет минимум ресурсов процессора и оперативной памяти.</p>
+<p>Оптимизированное ядро утилиты может потреблять минимум ресурсов процессора и памяти.</p>
 </div>
 <div class="feature-card">
 <h3>Интуитивный Терминал</h3>
@@ -489,6 +545,9 @@ footer .credits { color: #00ff41; margin-top: 10px; font-size: 1rem; }
 <div class="modal-content" style="border-color: #ffaa00; box-shadow: 0 0 30px rgba(255,170,0,0.3); max-width:700px;">
 <h3 id="adminModalTitle" style="color:#ffaa00; margin-bottom:20px;">[ СЕРВЕРНЫЙ ЛОГ: ДЕШИФРОВКА СООБЩЕНИЙ ]</h3>
 <div class="admin-box">
+<div class="filter-row">
+<input type="text" id="logFilterInput" class="filter-input" placeholder="Фильтр по отправителю или тексту...">
+</div>
 <div class="admin-log" id="adminLog"></div>
 </div>
 <div>
@@ -499,7 +558,7 @@ footer .credits { color: #00ff41; margin-top: 10px; font-size: 1rem; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -542,12 +601,68 @@ const chatHistory = document.getElementById('chatHistory');
 const chatInput = document.getElementById('chatInput');
 const sendMsgBtn = document.getElementById('sendMsgBtn');
 const adminLog = document.getElementById('adminLog');
+const logFilterInput = document.getElementById('logFilterInput');
 const adminModalTitle = document.getElementById('adminModalTitle');
+const serverStatus = document.getElementById('serverStatus');
 
 const originalTitle = document.title;
 const originalUrl = window.location.href;
 
 let currentUser = null;
+let isFirstLoad = true;
+let currentRawMessages = [];
+let adminModeActive = false;
+
+const connectedRef = ref(db, ".info/connected");
+onValue(connectedRef, (snap) => {
+if (snap.val() === true) {
+serverStatus.innerText = "[ СВЯЗЬ: ONLINE ]";
+serverStatus.classList.remove("offline");
+} else {
+serverStatus.innerText = "[ СВЯЗЬ: OFFLINE ]";
+serverStatus.classList.add("offline");
+}
+});
+
+function formatTime(timestamp) {
+if (!timestamp) return "[--:--:--]";
+const date = new Date(timestamp);
+const hours = String(date.getHours()).padStart(2, '0');
+const minutes = String(date.getMinutes()).padStart(2, '0');
+const seconds = String(date.getSeconds()).padStart(2, '0');
+return `[${hours}:${minutes}:${seconds}]`;
+}
+
+function playBeepSound() {
+try {
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const osc1 = audioCtx.createOscillator();
+const gain1 = audioCtx.createGain();
+osc1.type = 'sine';
+osc1.frequency.setValueAtTime(880, audioCtx.currentTime);
+gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
+gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+osc1.connect(gain1);
+gain1.connect(audioCtx.destination);
+osc1.start();
+osc1.stop(audioCtx.currentTime + 0.15);
+
+setTimeout(() => {
+const osc2 = audioCtx.createOscillator();
+const gain2 = audioCtx.createGain();
+osc2.type = 'sine';
+osc2.frequency.setValueAtTime(1200, audioCtx.currentTime);
+gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+osc2.connect(gain2);
+gain2.connect(audioCtx.destination);
+osc2.start();
+osc2.stop(audioCtx.currentTime + 0.2);
+}, 120);
+} catch (e) {
+console.log("Звук заблокирован.");
+}
+}
 
 function checkUIElements() {
 if (!currentUser) {
@@ -638,10 +753,15 @@ showChat();
 }, 1500);
 })
 .catch((error) => {
+if (error.code === 'auth/popup-blocked') {
+authPromptText.innerText = "[ ОКНО БЛОКИРОВАНО. ПЕРЕНАПРАВЛЕНИЕ... ]";
+signInWithRedirect(auth, provider);
+} else {
 submitAuthBtn.style.display = "inline-block";
 authPromptText.innerText = "Для отправки пакетов данных требуется защищенное сопряжение с аккаунтом Google.";
 authError.innerText = `[ ОШИБКА: ${error.message.toUpperCase()} ]`;
 authError.style.display = "block";
+}
 });
 });
 
@@ -656,9 +776,10 @@ chatHistory.innerHTML = '';
 const data = snapshot.val();
 if (data) {
 Object.values(data).forEach(msg => {
+const timeStr = formatTime(msg.timestamp);
 const div = document.createElement('div');
 div.className = 'chat-msg';
-div.innerHTML = `<span class="author">[${msg.user}]:</span> <span class="text">${msg.text}</span>`;
+div.innerHTML = `<span class="time-stamp">${timeStr}</span><span class="author">[${msg.user}]:</span> <span class="text">${msg.text}</span>`;
 chatHistory.appendChild(div);
 });
 chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -683,22 +804,52 @@ chatInput.addEventListener('keypress', (e) => {
 if (e.key === 'Enter') sendMsgBtn.click();
 });
 
+function startFakeLoading(callback) {
+adminLog.innerHTML = '<div class="log-loader" id="loaderText">[ . ]</div>';
+const loaderText = document.getElementById('loaderText');
+const frames = [
+"[ . ]", "[ .. ]", "[ ... ]",
+"[ CONNECTING TO DATABASE ]",
+"[ DECRYPTING DATA PACKETS ]",
+"[ GENERATING LOG TREE ]"
+];
+let currentFrame = 0;
+
+const interval = setInterval(() => {
+if (loaderText) {
+loaderText.innerText = frames[currentFrame % frames.length];
+currentFrame++;
+}
+}, 180);
+
+setTimeout(() => {
+clearInterval(interval);
+callback();
+}, 1200);
+}
+
 openAdminBtn.addEventListener('click', () => {
 adminModalTitle.innerText = "[ СЕРВЕРНЫЙ ЛОГ: ДЕШИФРОВКА ВСЕХ СООБЩЕНИЙ ]";
 adminModalTitle.style.color = "#ffaa00";
 adminModal.querySelector('.modal-content').style.borderColor = "#ffaa00";
+logFilterInput.style.borderColor = "#ffaa00";
 adminModal.classList.add('active');
 mainContainer.classList.add('blur');
-loadLogs(true);
+adminModeActive = true;
+logFilterInput.value = '';
+startFakeLoading(() => { loadLogs(); });
 });
 
 openUserLogsBtn.addEventListener('click', () => {
 adminModalTitle.innerText = "[ ТВОЙ ЛОГ ОТПРАВЛЕННЫХ ПАКЕТОВ ]";
 adminModalTitle.style.color = "#00e5ff";
 adminModal.querySelector('.modal-content').style.borderColor = "#00e5ff";
+logFilterInput.style.borderColor = "#00e5ff";
 adminModal.classList.add('active');
 mainContainer.classList.add('blur');
-loadLogs(false);
+adminModeActive = false;
+logFilterInput.value = '';
+startFakeLoading(() => { loadLogs(); });
 });
 
 function closeAdminModal() {
@@ -707,24 +858,32 @@ mainContainer.classList.remove('blur');
 }
 closeAdminBtn.addEventListener('click', closeAdminModal);
 
-function loadLogs(isAdminMode) {
-const messagesRef = ref(db, 'messages');
-onValue(messagesRef, (snapshot) => {
+function renderFilteredLogs() {
+if (adminLog.querySelector('.log-loader')) return;
+
 adminLog.innerHTML = '';
-const data = snapshot.val();
-if (!data) {
+const filterQuery = logFilterInput.value.toLowerCase().trim();
+
+let filteredMessages = adminModeActive ? currentRawMessages : currentRawMessages.filter(m => m.user === currentUser);
+
+if (filterQuery !== '') {
+filteredMessages = filteredMessages.filter(msg =>
+msg.user.toLowerCase().includes(filterQuery) ||
+msg.text.toLowerCase().includes(filterQuery)
+);
+}
+
+if (filteredMessages.length === 0) {
 adminLog.innerHTML = '<div style="color:#555;">Записей пакетов не обнаружено.</div>';
 return;
 }
 
-let messages = Object.values(data);
-let filteredMessages = isAdminMode ? messages : messages.filter(m => m.user === currentUser);
-
 filteredMessages.forEach((msg) => {
+const timeStr = formatTime(msg.timestamp);
 const div = document.createElement('div');
 div.className = 'admin-item';
-let content = `<span style="color:#ffaa00;">ОТПРАВИТЕЛЬ:</span> ${msg.user}<br><span style="color:#fff;">СОДЕРЖИМОЕ:</span> ${msg.text}`;
-if (isAdminMode && msg.user !== "andrejlox0306@gmail.com") {
+let content = `<span style="color:#555;">ВРЕМЯ:</span> ${timeStr}<br><span style="color:#ffaa00;">ОТПРАВИТЕЛЬ:</span> ${msg.user}<br><span style="color:#fff;">СОДЕРЖИМОЕ:</span> ${msg.text}`;
+if (adminModeActive && msg.user !== "andrejlox0306@gmail.com") {
 content += `<br><button class="btn-reply-node" data-user="${msg.user}">Ответить</button>`;
 }
 div.innerHTML = content;
@@ -732,12 +891,35 @@ adminLog.appendChild(div);
 });
 
 adminLog.querySelectorAll('.btn-reply-node').forEach(btn => {
-btn.addEventListener('click', (e) => {
+btn.onclick = (e) => {
 const userEmail = e.target.getAttribute('data-user');
 replyToUser(userEmail);
+};
 });
-});
+
 adminLog.scrollTop = adminLog.scrollHeight;
+}
+
+logFilterInput.addEventListener('input', renderFilteredLogs);
+
+function loadLogs() {
+const messagesRef = ref(db, 'messages');
+onValue(messagesRef, (snapshot) => {
+const data = snapshot.val();
+currentRawMessages = data ? Object.values(data) : [];
+
+if (isFirstLoad) {
+isFirstLoad = false;
+} else {
+if (adminModeActive && currentRawMessages.length > 0) {
+const lastMsg = currentRawMessages[currentRawMessages.length - 1];
+if (lastMsg.user !== "andrejlox0306@gmail.com") {
+playBeepSound();
+}
+}
+}
+
+renderFilteredLogs();
 });
 }
 
