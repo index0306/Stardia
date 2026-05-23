@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FSOCIETY // TRACKER SYSTEMS</title>
 <style>
-/* Обнуление стилей и темная хакерская база */
 * {
 margin: 0;
 padding: 0;
@@ -15,12 +14,11 @@ font-family: 'Courier New', Courier, monospace;
 
 body {
 background-color: #050505;
-color: #00ff41; /* Классический зеленый цвет терминала */
+color: #00ff41;
 overflow-x: hidden;
 position: relative;
 }
 
-/* Эффект шума/сетки на фоне в стиле старых мониторов */
 body::before {
 content: " ";
 display: block;
@@ -32,7 +30,6 @@ background-size: 100% 3px, 6px 100%;
 pointer-events: none;
 }
 
-/* Плавное появление элементов при загрузке */
 @keyframes fadeIn {
 from { opacity: 0; transform: translateY(20px); }
 to { opacity: 1; transform: translateY(0); }
@@ -44,14 +41,47 @@ to { opacity: 1; transform: translateY(0); }
 100% { text-shadow: 2px -2px #ff0055, -2px 2px #00ff41; }
 }
 
+@keyframes hyperGlitch {
+0% {
+text-shadow: 3px 2px 0 #ff0055, -3px -2px 0 #00ff41;
+transform: translate(0, 0) skew(0deg);
+}
+20% {
+text-shadow: -3px -2px 0 #ff0055, 3px 2px 0 #00ff41;
+transform: translate(-2px, 2px) skew(4deg);
+}
+40% {
+text-shadow: 4px -1px 0 #ff0055, -4px 3px 0 #00ff41;
+transform: translate(2px, -1px) skew(-2deg);
+}
+60% {
+text-shadow: -2px 3px 0 #ff0055, 2px -3px 0 #00ff41;
+transform: translate(-1px, -1px) skew(5deg);
+}
+80% {
+text-shadow: 3px 1px 0 #ff0055, -2px 2px 0 #00ff41;
+transform: translate(3px, 1px) skew(-4deg);
+}
+100% {
+text-shadow: -3px -2px 0 #ff0055, 3px 2px 0 #00ff41;
+transform: translate(0, 0) skew(0deg);
+}
+}
+
+@keyframes textPulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.08); filter: brightness(1.4); }
+100% { transform: scale(1); }
+}
+
 .container {
 max-width: 1000px;
 margin: 0 auto;
 padding: 20px;
 animation: fadeIn 1.2s ease-out;
+transition: filter 0.4s ease;
 }
 
-/* Верхнее предупреждение */
 .warning-banner {
 text-align: center;
 background-color: rgba(255, 0, 0, 0.15);
@@ -66,7 +96,6 @@ letter-spacing: 2px;
 animation: glitch 1s infinite alternate;
 }
 
-/* Хедер */
 header {
 text-align: center;
 margin-bottom: 60px;
@@ -87,7 +116,6 @@ color: #888;
 font-size: 1rem;
 }
 
-/* Секция преимуществ */
 .features {
 display: grid;
 grid-template-columns: 1fr 1fr;
@@ -108,7 +136,6 @@ transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 overflow: hidden;
 }
 
-/* Плавная анимация карточек при наведении */
 .feature-card:hover {
 transform: translateY(-5px);
 box-shadow: 0 10px 20px rgba(0, 255, 65, 0.2);
@@ -136,7 +163,6 @@ line-height: 1.6;
 font-size: 0.95rem;
 }
 
-/* Секция загрузки */
 .download-section {
 text-align: center;
 background: rgba(15, 15, 15, 0.9);
@@ -153,8 +179,14 @@ color: #ffffff;
 letter-spacing: 2px;
 }
 
-/* Плавная крутая анимация для хакерской кнопки */
-.btn-download {
+.button-group {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 20px;
+}
+
+.btn-download, .btn-virus {
 display: inline-block;
 background: transparent;
 color: #00ff41;
@@ -170,9 +202,17 @@ overflow: hidden;
 transition: all 0.3s ease;
 cursor: pointer;
 box-shadow: 0 0 5px rgba(0, 255, 65, 0.4);
+width: 100%;
+max-width: 450px;
+text-align: center;
 }
 
-/* Анимация при наведении на кнопку */
+.btn-virus {
+color: #ff0055;
+border-color: #ff0055;
+box-shadow: 0 0 5px rgba(255, 0, 85, 0.4);
+}
+
 .btn-download:hover {
 color: #050505;
 background: #00ff41;
@@ -180,11 +220,91 @@ box-shadow: 0 0 25px #00ff41, 0 0 50px rgba(0, 255, 65, 0.6);
 transform: scale(1.05);
 }
 
-.btn-download:active {
+.btn-virus:hover {
+color: #050505;
+background: #ff0055;
+box-shadow: 0 0 25px #ff0055, 0 0 50px rgba(255, 0, 85, 0.6);
+transform: scale(1.05);
+}
+
+.btn-download:active, .btn-virus:active {
 transform: scale(0.98);
 }
 
-/* Секция авторов */
+.modal-overlay {
+position: fixed;
+top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(5, 5, 5, 0.9);
+z-index: 10000;
+display: flex;
+justify-content: center;
+align-items: center;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.4s ease;
+}
+
+.modal-overlay.active {
+opacity: 1;
+pointer-events: auto;
+}
+
+.modal-content {
+background: rgba(15, 0, 5, 0.95);
+border: 2px solid #ff0055;
+padding: 50px 30px;
+max-width: 550px;
+width: 90%;
+text-align: center;
+box-shadow: 0 0 40px rgba(255, 0, 85, 0.4);
+transform: scale(0.8);
+transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.active .modal-content {
+transform: scale(1);
+}
+
+.modal-content h3 {
+color: #ff0055;
+font-size: 1.5rem;
+margin-bottom: 30px;
+letter-spacing: 2px;
+text-shadow: 0 0 8px #ff0055;
+}
+
+.crazy-animated-text {
+display: inline-block;
+color: #ffffff;
+font-size: 1.3rem;
+line-height: 1.6;
+margin-bottom: 40px;
+text-transform: uppercase;
+font-weight: bold;
+letter-spacing: 1px;
+animation: hyperGlitch 0.2s infinite linear, textPulse 1.5s infinite ease-in-out;
+}
+
+.btn-back {
+display: inline-block;
+background: transparent;
+color: #ffffff;
+border: 2px solid #ffffff;
+padding: 12px 30px;
+font-size: 1rem;
+font-weight: bold;
+text-transform: uppercase;
+letter-spacing: 2px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+color: #050505;
+background: #ffffff;
+box-shadow: 0 0 15px #ffffff;
+}
+
 footer {
 text-align: center;
 border-top: 1px dashed #333;
@@ -200,11 +320,15 @@ margin-top: 10px;
 font-size: 1rem;
 letter-spacing: 1px;
 }
+
+.blur {
+filter: blur(5px);
+}
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
 
 <div class="warning-banner">
 [!] ВСЕ ФАЙЛЫ ВНИЗУ! [!]
@@ -241,9 +365,15 @@ letter-spacing: 1px;
 <h2>ЗАГРУЗОЧНЫЙ СЕКТОР</h2>
 <p style="color: #666; margin-bottom: 25px;">Готов к развертыванию целевого исполняемого файла</p>
 
+<div class="button-group">
 <a href="fsociety_tracker.sys.exe" download="fsociety_tracker.sys.exe" class="btn-download">
 Скачать fsociety_tracker.sys.exe
 </a>
+
+<button class="btn-virus" id="openVirusBtn">
+Список вирусов
+</button>
+</div>
 </section>
 
 <footer>
@@ -255,10 +385,43 @@ credits: Gemini, okyrok2280
 
 </div>
 
+<div class="modal-overlay" id="virusModal">
+<div class="modal-content">
+<h3>[ КРИТИЧЕСКИЙ СБОЙ СИСТЕМЫ ]</h3>
+<div class="crazy-animated-text">
+Вирусы пока что не написаны сори недохакер(
+</div>
+<div>
+<button class="btn-back" id="closeVirusBtn">back</button>
+</div>
+</div>
+</div>
+
 <script>
-// Небольшой интерактивный эффект для хакерской атмосферы в консоли браузера
 console.log("%cFSOCIETY: Инициализация интерфейса трекера выполнена успешно.", "color: #00ff41; font-size: 14px; font-weight: bold;");
 console.log("%cДобро пожаловать в систему.", "color: #ffffff;");
+
+const mainContainer = document.getElementById('mainContainer');
+const virusModal = document.getElementById('virusModal');
+const openVirusBtn = document.getElementById('openVirusBtn');
+const closeVirusBtn = document.getElementById('closeVirusBtn');
+
+openVirusBtn.addEventListener('click', () => {
+virusModal.classList.add('active');
+mainContainer.classList.add('blur');
+});
+
+closeVirusBtn.addEventListener('click', () => {
+virusModal.classList.remove('active');
+mainContainer.classList.remove('blur');
+});
+
+virusModal.addEventListener('click', (e) => {
+if (e.target === virusModal) {
+virusModal.classList.remove('active');
+mainContainer.classList.remove('blur');
+}
+});
 </script>
 
 </body>
