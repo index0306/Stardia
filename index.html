@@ -612,6 +612,7 @@ let currentUser = null;
 let isFirstLoad = true;
 let currentRawMessages = [];
 let adminModeActive = false;
+let messagesListenerActive = false;
 
 const connectedRef = ref(db, ".info/connected");
 onValue(connectedRef, (snap) => {
@@ -680,15 +681,37 @@ openUserLogsBtn.style.display = "inline-block";
 }
 }
 
+function showAuth() {
+chatModalTitle.innerText = "[ ВХОД В ТЕРМИНАЛ СВЯЗИ ]";
+authBlock.style.display = "flex";
+submitAuthBtn.style.display = "inline-block";
+authPromptText.style.display = "block";
+authPromptText.innerText = "Для отправки пакетов данных требуется защищенное сопряжение с аккаунтом Google.";
+successCheck.style.display = "none";
+chatBlock.style.display = "none";
+authError.style.display = "none";
+}
+
+function showChat() {
+chatModalTitle.innerText = `[ СЕССИЯ: ${currentUser} ]`;
+authBlock.style.display = "none";
+chatBlock.style.display = "flex";
+listenToMessages();
+}
+
 onAuthStateChanged(auth, (user) => {
 if (user) {
 currentUser = user.email;
 checkUIElements();
-if (chatModal.classList.contains('active')) showChat();
+if (chatModal.classList.contains('active')) {
+showChat();
+}
 } else {
 currentUser = null;
 checkUIElements();
-if (chatModal.classList.contains('active')) showAuth();
+if (chatModal.classList.contains('active')) {
+showAuth();
+}
 }
 });
 
@@ -710,7 +733,11 @@ closeVirusBtn.addEventListener('click', closeVirusModal);
 openChatBtn.addEventListener('click', () => {
 chatModal.classList.add('active');
 mainContainer.classList.add('blur');
-if (currentUser) showChat(); else showAuth();
+if (currentUser) {
+showChat();
+} else {
+showAuth();
+}
 });
 
 function closeChatModal() {
@@ -718,24 +745,6 @@ chatModal.classList.remove('active');
 mainContainer.classList.remove('blur');
 }
 closeChatBtn.addEventListener('click', closeChatModal);
-
-function showAuth() {
-chatModalTitle.innerText = "[ ВХОД В ТЕРМИНАЛ СВЯЗИ ]";
-authBlock.style.display = "flex";
-submitAuthBtn.style.display = "inline-block";
-authPromptText.style.display = "block";
-authPromptText.innerText = "Для отправки пакетов данных требуется защищенное сопряжение с аккаунтом Google.";
-successCheck.style.display = "none";
-chatBlock.style.display = "none";
-authError.style.display = "none";
-}
-
-function showChat() {
-chatModalTitle.innerText = `[ СЕССИЯ: ${currentUser} ]`;
-authBlock.style.display = "none";
-chatBlock.style.display = "flex";
-listenToMessages();
-}
 
 submitAuthBtn.addEventListener('click', () => {
 authError.style.display = "none";
@@ -770,6 +779,9 @@ signOut(auth).then(() => { showAuth(); });
 });
 
 function listenToMessages() {
+if (messagesListenerActive) return;
+messagesListenerActive = true;
+
 const messagesRef = ref(db, 'messages');
 onValue(messagesRef, (snapshot) => {
 chatHistory.innerHTML = '';
@@ -902,7 +914,14 @@ adminLog.scrollTop = adminLog.scrollHeight;
 
 logFilterInput.addEventListener('input', renderFilteredLogs);
 
+let logsListenerActive = false;
 function loadLogs() {
+if (logsListenerActive) {
+renderFilteredLogs();
+return;
+}
+logsListenerActive = true;
+
 const messagesRef = ref(db, 'messages');
 onValue(messagesRef, (snapshot) => {
 const data = snapshot.val();
