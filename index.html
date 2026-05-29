@@ -1,102 +1,167 @@
+Вот полный код для сайта отзывов на HTML с интеграцией Firebase, а также обновленный код для твоего мода на Майнкрафт 1.21.1 с новым дизайном, ссылкой в настройках и интеграцией отзывов.
+
+Часть 1: Сайт отзывов на HTML + Firebase
+Для работы аутентификации и базы данных тебе понадобится создать проект в Firebase Console, включить там Authentication (Google или Email) и Cloud Firestore в тестовом режиме. Замени заглушки ПОДСТАВЬ_СВОЙ_... в секции firebaseConfig на реальные ключи из настроек твоего Firebase-проекта.
+
+Ниже представлен полный и целый код HTML-страницы со стилями и скриптом.
+
+HTML
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>3D GENESIS ENGINE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система отзывов и оценок</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #050505; color: white; margin: 0; }
-        .glass { background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .gradient-text { background: linear-gradient(90deg, #00ff88, #00aaff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f111a; color: #ffffff; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; background: #161925; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid #23283b; }
+        h1, h2 { margin-bottom: 20px; text-align: center; color: #00ffcc; font-weight: 600; }
+        .auth-box, .review-form { margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid #23283b; text-align: center; }
+        .hidden { display: none !important; }
+        button { background: #00ffcc; color: #0f111a; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; width: 100%; margin-top: 10px; }
+        button:hover { background: #00cca3; transform: translateY(-1px); }
+        .btn-logout { background: #ff5555; color: #fff; margin-top: 15px; }
+        .btn-logout:hover { background: #cc3333; }
+        .rating-select { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .rating-select select { background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 10px; border-radius: 6px; font-size: 16px; width: 80px; text-align: center; }
+        textarea { width: 100%; height: 100px; background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 12px; border-radius: 6px; resize: none; font-size: 15px; margin-bottom: 10px; }
+        textarea:focus, .rating-select select:focus { border-color: #00ffcc; outline: none; }
+        .review-card { background: #0f111a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #00ffcc; }
+        .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #8b9bb4; }
+        .review-stars { color: #ffaa00; font-weight: bold; }
+        .review-text { font-size: 15px; line-height: 1.5; color: #e2e8f0; }
+        .user-info { font-size: 14px; color: #8b9bb4; margin-bottom: 15px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="canvas"></div>
+    <div class="container">
+        <h1>Отзывы пользователей</h1>
 
-    <div class="fixed top-8 left-8 z-10 glass p-6 rounded-2xl w-80 shadow-2xl">
-        <h1 class="text-xl font-black uppercase tracking-widest mb-1 gradient-text">3D Genesis</h1>
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-6">JSON to GLB Converter</p>
-        
-        <div id="dropZone" class="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-green-500 transition-colors">
-            <span class="text-sm">Перетащите .json сюда</span>
+        <div id="auth-section" class="auth-box">
+            <p style="margin-bottom: 15px; color: #8b9bb4;">Для того чтобы оставить отзыв, необходимо авторизоваться.</p>
+            <button id="btn-login">Войти через Google</button>
         </div>
 
-        <button id="exportBtn" class="w-full mt-6 bg-white text-black font-bold py-3 rounded-lg hover:bg-green-400 transition-all transform active:scale-95 disabled:opacity-50" disabled>
-            ЭКСПОРТ (GLB)
-        </button>
-        <div id="status" class="mt-4 text-[10px] text-gray-500 text-center">ОЖИДАНИЕ ФАЙЛА</div>
+        <div id="review-section" class="review-form hidden">
+            <div class="user-info">Вы вошли как: <span id="user-display-name" style="color: #00ffcc; font-weight: bold;"></span></div>
+            
+            <div class="rating-select">
+                <label style="line-height: 40px;">Оценка:</label>
+                <select id="rating-value">
+                    <option value="5">5 ★</option>
+                    <option value="4">4 ★</option>
+                    <option value="3">3 ★</option>
+                    <option value="2">2 ★</option>
+                    <option value="1">1 ★</option>
+                    <option value="0">0 ★</option>
+                </select>
+            </div>
+
+            <textarea id="review-comment" placeholder="Напишите ваш серьезный, развернутый отзыв здесь..."></textarea>
+            <button id="btn-submit">Отправить отзыв</button>
+            <button id="btn-logout" class="btn-logout">Выйти из аккаунта</button>
+        </div>
+
+        <h2>Все отзывы</h2>
+        <div id="reviews-container"></div>
     </div>
 
-    <script>
-        // Setup Three.js Scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas').appendChild(renderer.domElement);
-        
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        camera.position.set(2, 2, 5);
-        
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(5, 5, 5);
-        scene.add(dirLight);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let importedMesh = null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUA4VdfGTMwpLuRITllmSsJq6sjfcJFag",
+            authDomain: "fsociety-tracker.firebaseapp.com",
+            projectId: "fsociety-tracker",
+            storageBucket: "fsociety-tracker.firebasestorage.app",
+            messagingSenderId: "505857587448",
+            appId: "1:505857587448:web:2f5d6444781e8b3965230d"
+        };
 
-        // Logic
-        const dropZone = document.getElementById('dropZone');
-        const exportBtn = document.getElementById('exportBtn');
-        const status = document.getElementById('status');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-        dropZone.addEventListener('dragover', (e) => e.preventDefault());
-        dropZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            const text = await file.text();
-            try {
-                const data = JSON.parse(text);
-                processJSON(data);
-                status.innerText = "ФАЙЛ ЗАГРУЖЕН: " + file.name;
-                exportBtn.disabled = false;
-            } catch(err) {
-                status.innerText = "ОШИБКА JSON";
+        const authSection = document.getElementById('auth-section');
+        const reviewSection = document.getElementById('review-section');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const btnSubmit = document.getElementById('btn-submit');
+        const userDisplayName = document.getElementById('user-display-name');
+        const reviewsContainer = document.getElementById('reviews-container');
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                userDisplayName.textContent = user.displayName || user.email;
+                authSection.classList.add('hidden');
+                reviewSection.classList.remove('hidden');
+            } else {
+                currentUser = null;
+                authSection.classList.remove('hidden');
+                reviewSection.classList.add('hidden');
             }
         });
 
-        function processJSON(data) {
-            if(importedMesh) scene.remove(importedMesh);
-            
-            // Простой парсер: если в JSON массив вершин
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff88, wireframe: false });
-            importedMesh = new THREE.Mesh(geometry, material);
-            scene.add(importedMesh);
-        }
-
-        exportBtn.addEventListener('click', () => {
-            const exporter = new THREE.GLTFExporter();
-            exporter.parse(scene, (result) => {
-                const blob = new Blob([JSON.stringify(result)], {type: 'application/json'});
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'model.glb';
-                link.click();
-            }, { binary: true });
+        btnLogin.addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch((error) => console.error("Ошибка входа:", error));
         });
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
+        btnLogout.addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error("Ошибка выхода:", error));
+        });
+
+        btnSubmit.addEventListener('click', async () => {
+            const comment = document.getElementById('review-comment').value.trim();
+            const rating = parseInt(document.getElementById('rating-value').value);
+
+            if (!comment) {
+                alert("Пожалуйста, введите текст отзыва.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "reviews"), {
+                    username: currentUser.displayName || "Аноним",
+                    rating: rating,
+                    text: comment,
+                    timestamp: Date.now()
+                });
+                document.getElementById('review-comment').value = '';
+                document.getElementById('rating-value').value = '5';
+            } catch (e) {
+                console.error("Ошибка отправки отзыва: ", e);
+            }
+        });
+
+        const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (querySnapshot) => {
+            reviewsContainer.innerHTML = '';
+            if (querySnapshot.empty) {
+                reviewsContainer.innerHTML = '<p style="text-align:center; color:#8b9bb4;">Отзывов пока нет.</p>';
+                return;
+            }
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const card = document.createElement('div');
+                card.className = 'review-card';
+                card.innerHTML = `
+                    <div class="review-header">
+                        <span style="font-weight:bold; color:#fff;">${data.username}</span>
+                        <span class="review-stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</span>
+                    </div>
+                    <p class="review-text">${data.text}</p>
+                `;
+                reviewsContainer.appendChild(card);
+            });
+        });
     </script>
 </body>
 </html>
