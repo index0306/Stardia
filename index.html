@@ -17,8 +17,8 @@
         .btn-logout { background: #ff5555; color: #fff; margin-top: 15px; }
         .btn-logout:hover { background: #cc3333; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #23283b; color: #8b9bb4; padding: 10px; font-size: 14px; border-radius: 6px; width: 50%; margin: 0; }
-        .tab-btn.active { background: #00ffcc; color: #0f111a; }
+        .tab-btn { background: #23283b; color: #8b9bb4; padding: 10px; font-size: 14px; border-radius: 6px; width: 50%; margin: 0; cursor: pointer; border: none; }
+        .tab-btn.active { background: #00ffcc; color: #0f111a; font-weight: bold; }
         .rating-select { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
         .rating-select select { background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 10px; border-radius: 6px; font-size: 16px; width: 80px; text-align: center; }
         textarea { width: 100%; height: 100px; background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 12px; border-radius: 6px; resize: none; font-size: 15px; margin-bottom: 10px; }
@@ -28,14 +28,14 @@
         .review-stars { color: #ffaa00; font-weight: bold; }
         .review-text { font-size: 15px; line-height: 1.5; color: #e2e8f0; }
         .user-info { font-size: 14px; color: #8b9bb4; margin-bottom: 15px; text-align: center; }
-        .btn-delete { position: absolute; top: 12px; right: 12px; background: #ff5555; color: white; width: auto; font-size: 12px; padding: 4px 8px; margin: 0; border-radius: 4px; }
+        .btn-delete { position: absolute; top: 12px; right: 12px; background: #ff5555; color: white; width: auto; font-size: 12px; padding: 4px 8px; margin: 0; border-radius: 4px; border: none; cursor: pointer; }
         .btn-delete:hover { background: #cc3333; }
-        .admin-reply-box { margin-top: 10px; padding: 10px; background: #1c2333; border-radius: 6px; border-left: 3px solid #ffaa00; }
+        .admin-reply-box { margin-top: 10px; padding: 10px; background: #1c2333; border-radius: 6px; border-left: 3px solid #ffaa00; text-align: left; }
         .admin-reply-title { font-size: 13px; color: #ffaa00; font-weight: bold; margin-bottom: 4px; }
         .admin-reply-text { font-size: 14px; color: #e2e8f0; }
         .admin-input-group { margin-top: 10px; display: flex; gap: 8px; }
         .admin-input { flex-grow: 1; background: #0f111a; border: 1px solid #23283b; color: white; padding: 6px; border-radius: 4px; font-size: 13px; }
-        .btn-reply-submit { background: #ffaa00; color: #0f111a; width: auto; padding: 6px 12px; margin: 0; font-size: 13px; }
+        .btn-reply-submit { background: #ffaa00; color: #0f111a; width: auto; padding: 6px 12px; margin: 0; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -108,6 +108,7 @@
         let currentUser = null;
         let currentTab = 'all'; 
         let lastSubmitTime = 0;
+        let unsubscribe = null;
 
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
@@ -163,10 +164,17 @@
 
             try {
                 const oneDayAgo = now - (24 * 60 * 60 * 1000);
-                const qDaily = query(collection(db, "reviews"), where("uid", "==", currentUser.uid), where("timestamp", ">=", oneDayAgo));
+                const qDaily = query(collection(db, "reviews"), where("uid", "==", currentUser.uid));
                 const dailySnap = await getDocs(qDaily);
                 
-                if (dailySnap.size >= 20) {
+                let dailyCount = 0;
+                dailySnap.forEach((d) => {
+                    if (d.data().timestamp >= oneDayAgo) {
+                        dailyCount++;
+                    }
+                });
+
+                if (dailyCount >= 20) {
                     alert("Превышен суточный лимит. Нельзя оставлять более 20 отзывов в день.");
                     return;
                 }
@@ -220,13 +228,15 @@
         };
 
         function renderReviews() {
+            if (unsubscribe) unsubscribe();
+
             let q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
             
             if (currentTab === 'my' && currentUser) {
                 q = query(collection(db, "reviews"), where("uid", "==", currentUser.uid), orderBy("timestamp", "desc"));
             }
 
-            onSnapshot(q, (querySnapshot) => {
+            unsubscribe = onSnapshot(q, (querySnapshot) => {
                 reviewsContainer.innerHTML = '';
                 if (querySnapshot.empty) {
                     reviewsContainer.innerHTML = '<p style="text-align:center; color:#8b9bb4;">Отзывов не найдено.</p>';
@@ -236,10 +246,6 @@
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const id = docSnap.id;
-                    
-                    if (currentTab === 'my' && (!currentUser || data.uid !== currentUser.uid)) {
-                        return;
-                    }
 
                     const card = document.createElement('div');
                     card.className = 'review-card';
@@ -281,6 +287,11 @@
                     `;
                     reviewsContainer.appendChild(card);
                 });
+            }, (error) => {
+                console.error("Ошибка Firestore:", error);
+                if (error.message.includes("index")) {
+                    reviewsContainer.innerHTML = '<p style="text-align:center; color:#ff5555; font-size:12px;">Требуется создать составной индекс в Firebase Console. Проверь консоль браузера (F12) для получения ссылки.</p>';
+                }
             });
         }
     </script>
