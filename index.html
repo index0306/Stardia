@@ -1,11 +1,3 @@
-Вот полный код для сайта отзывов на HTML с интеграцией Firebase, а также обновленный код для твоего мода на Майнкрафт 1.21.1 с новым дизайном, ссылкой в настройках и интеграцией отзывов.
-
-Часть 1: Сайт отзывов на HTML + Firebase
-Для работы аутентификации и базы данных тебе понадобится создать проект в Firebase Console, включить там Authentication (Google или Email) и Cloud Firestore в тестовом режиме. Замени заглушки ПОДСТАВЬ_СВОЙ_... в секции firebaseConfig на реальные ключи из настроек твоего Firebase-проекта.
-
-Ниже представлен полный и целый код HTML-страницы со стилями и скриптом.
-
-HTML
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -21,17 +13,29 @@ HTML
         .hidden { display: none !important; }
         button { background: #00ffcc; color: #0f111a; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; width: 100%; margin-top: 10px; }
         button:hover { background: #00cca3; transform: translateY(-1px); }
+        button:disabled { background: #3a4155; color: #8b9bb4; cursor: not-allowed; }
         .btn-logout { background: #ff5555; color: #fff; margin-top: 15px; }
         .btn-logout:hover { background: #cc3333; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #23283b; color: #8b9bb4; padding: 10px; font-size: 14px; border-radius: 6px; width: 50%; margin: 0; }
+        .tab-btn.active { background: #00ffcc; color: #0f111a; }
         .rating-select { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
         .rating-select select { background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 10px; border-radius: 6px; font-size: 16px; width: 80px; text-align: center; }
         textarea { width: 100%; height: 100px; background: #0f111a; color: #fff; border: 1px solid #23283b; padding: 12px; border-radius: 6px; resize: none; font-size: 15px; margin-bottom: 10px; }
         textarea:focus, .rating-select select:focus { border-color: #00ffcc; outline: none; }
-        .review-card { background: #0f111a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #00ffcc; }
-        .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #8b9bb4; }
+        .review-card { background: #0f111a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #00ffcc; position: relative; }
+        .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #8b9bb4; padding-right: 70px; }
         .review-stars { color: #ffaa00; font-weight: bold; }
         .review-text { font-size: 15px; line-height: 1.5; color: #e2e8f0; }
         .user-info { font-size: 14px; color: #8b9bb4; margin-bottom: 15px; text-align: center; }
+        .btn-delete { position: absolute; top: 12px; right: 12px; background: #ff5555; color: white; width: auto; font-size: 12px; padding: 4px 8px; margin: 0; border-radius: 4px; }
+        .btn-delete:hover { background: #cc3333; }
+        .admin-reply-box { margin-top: 10px; padding: 10px; background: #1c2333; border-radius: 6px; border-left: 3px solid #ffaa00; }
+        .admin-reply-title { font-size: 13px; color: #ffaa00; font-weight: bold; margin-bottom: 4px; }
+        .admin-reply-text { font-size: 14px; color: #e2e8f0; }
+        .admin-input-group { margin-top: 10px; display: flex; gap: 8px; }
+        .admin-input { flex-grow: 1; background: #0f111a; border: 1px solid #23283b; color: white; padding: 6px; border-radius: 4px; font-size: 13px; }
+        .btn-reply-submit { background: #ffaa00; color: #0f111a; width: auto; padding: 6px 12px; margin: 0; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -64,14 +68,18 @@ HTML
             <button id="btn-logout" class="btn-logout">Выйти из аккаунта</button>
         </div>
 
-        <h2>Все отзывы</h2>
+        <div class="tabs">
+            <button id="tab-all" class="tab-btn active">Все отзывы</button>
+            <button id="tab-my" class="tab-btn">Мои отзывы</button>
+        </div>
+
         <div id="reviews-container"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDUA4VdfGTMwpLuRITllmSsJq6sjfcJFag",
@@ -94,31 +102,57 @@ HTML
         const btnSubmit = document.getElementById('btn-submit');
         const userDisplayName = document.getElementById('user-display-name');
         const reviewsContainer = document.getElementById('reviews-container');
+        const tabAll = document.getElementById('tab-all');
+        const tabMy = document.getElementById('tab-my');
 
         let currentUser = null;
+        let currentTab = 'all'; 
+        let lastSubmitTime = 0;
 
         onAuthStateChanged(auth, (user) => {
+            currentUser = user;
             if (user) {
-                currentUser = user;
                 userDisplayName.textContent = user.displayName || user.email;
                 authSection.classList.add('hidden');
                 reviewSection.classList.remove('hidden');
             } else {
-                currentUser = null;
                 authSection.classList.remove('hidden');
                 reviewSection.classList.add('hidden');
             }
+            renderReviews();
         });
 
         btnLogin.addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch((error) => console.error("Ошибка входа:", error));
+            signInWithPopup(auth, provider).catch((error) => console.error(error));
         });
 
         btnLogout.addEventListener('click', () => {
-            signOut(auth).catch((error) => console.error("Ошибка выхода:", error));
+            signOut(auth).catch((error) => console.error(error));
+        });
+
+        tabAll.addEventListener('click', () => {
+            currentTab = 'all';
+            tabAll.classList.add('active');
+            tabMy.classList.remove('active');
+            renderReviews();
+        });
+
+        tabMy.addEventListener('click', () => {
+            currentTab = 'my';
+            tabMy.classList.add('active');
+            tabAll.classList.remove('active');
+            renderReviews();
         });
 
         btnSubmit.addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            const now = Date.now();
+            if (now - lastSubmitTime < 20000) {
+                alert("Подождите 20 секунд перед отправкой следующего отзыва.");
+                return;
+            }
+
             const comment = document.getElementById('review-comment').value.trim();
             const rating = parseInt(document.getElementById('rating-value').value);
 
@@ -128,40 +162,127 @@ HTML
             }
 
             try {
+                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                const qDaily = query(collection(db, "reviews"), where("uid", "==", currentUser.uid), where("timestamp", ">=", oneDayAgo));
+                const dailySnap = await getDocs(qDaily);
+                
+                if (dailySnap.size >= 20) {
+                    alert("Превышен суточный лимит. Нельзя оставлять более 20 отзывов в день.");
+                    return;
+                }
+
                 await addDoc(collection(db, "reviews"), {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
                     username: currentUser.displayName || "Аноним",
                     rating: rating,
                     text: comment,
-                    timestamp: Date.now()
+                    timestamp: now,
+                    reply: ""
                 });
+
+                lastSubmitTime = now;
                 document.getElementById('review-comment').value = '';
                 document.getElementById('rating-value').value = '5';
+                
+                let cd = 20;
+                btnSubmit.disabled = true;
+                const timer = setInterval(() => {
+                    cd--;
+                    if (cd <= 0) {
+                        clearInterval(timer);
+                        btnSubmit.textContent = "Отправить отзыв";
+                        btnSubmit.disabled = false;
+                    } else {
+                        btnSubmit.textContent = `Кулдаун (${cd}с)`;
+                    }
+                }, 1000);
+
             } catch (e) {
-                console.error("Ошибка отправки отзыва: ", e);
+                console.error(e);
             }
         });
 
-        const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
-        onSnapshot(q, (querySnapshot) => {
-            reviewsContainer.innerHTML = '';
-            if (querySnapshot.empty) {
-                reviewsContainer.innerHTML = '<p style="text-align:center; color:#8b9bb4;">Отзывов пока нет.</p>';
-                return;
+        window.deleteReview = async (id) => {
+            if (confirm("Вы уверены, что хотите удалить этот отзыв?")) {
+                await deleteDoc(doc(db, "reviews", id));
             }
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const card = document.createElement('div');
-                card.className = 'review-card';
-                card.innerHTML = `
-                    <div class="review-header">
-                        <span style="font-weight:bold; color:#fff;">${data.username}</span>
-                        <span class="review-stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</span>
-                    </div>
-                    <p class="review-text">${data.text}</p>
-                `;
-                reviewsContainer.appendChild(card);
+        };
+
+        window.submitReply = async (id) => {
+            const replyInput = document.getElementById(`reply-input-${id}`);
+            const replyText = replyInput.value.trim();
+            if (!replyText) return;
+
+            await updateDoc(doc(db, "reviews", id), {
+                reply: replyText
             });
-        });
+        };
+
+        function renderReviews() {
+            let q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
+            
+            if (currentTab === 'my' && currentUser) {
+                q = query(collection(db, "reviews"), where("uid", "==", currentUser.uid), orderBy("timestamp", "desc"));
+            }
+
+            onSnapshot(q, (querySnapshot) => {
+                reviewsContainer.innerHTML = '';
+                if (querySnapshot.empty) {
+                    reviewsContainer.innerHTML = '<p style="text-align:center; color:#8b9bb4;">Отзывов не найдено.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    
+                    if (currentTab === 'my' && (!currentUser || data.uid !== currentUser.uid)) {
+                        return;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'review-card';
+
+                    let deleteBtnHtml = '';
+                    if (currentUser && data.uid === currentUser.uid) {
+                        deleteBtnHtml = `<button class="btn-delete" onclick="deleteReview('${id}')">Удалить</button>`;
+                    }
+
+                    let replyBlockHtml = '';
+                    if (data.reply) {
+                        replyBlockHtml = `
+                            <div class="admin-reply-box">
+                                <div class="admin-reply-title">Ответ разработчика:</div>
+                                <div class="admin-reply-text">${data.reply}</div>
+                            </div>
+                        `;
+                    }
+
+                    let adminControlsHtml = '';
+                    if (currentUser && currentUser.email === 'andrejlox0306@gmail.com') {
+                        adminControlsHtml = `
+                            <div class="admin-input-group">
+                                <input type="text" id="reply-input-${id}" class="admin-input" placeholder="Написать ответ..." value="${data.reply || ''}">
+                                <button class="btn-reply-submit" onclick="submitReply('${id}')">Ответить</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="review-header">
+                            <span style="font-weight:bold; color:#fff;">${data.username}</span>
+                            <span class="review-stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</span>
+                        </div>
+                        <p class="review-text">${data.text}</p>
+                        ${replyBlockHtml}
+                        ${adminControlsHtml}
+                        ${deleteBtnHtml}
+                    `;
+                    reviewsContainer.appendChild(card);
+                });
+            });
+        }
     </script>
 </body>
 </html>
